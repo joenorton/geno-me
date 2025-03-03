@@ -1,0 +1,66 @@
+{
+  "rs12913832": {
+    "G/G": "blue eyes; lighter hair (blond possible)",
+    "G/A": "intermediate eye color (green/hazel); moderate hair",
+    "A/A": "brown eyes; darker hair (brown/black)"
+  },
+  "rs1800407": {
+    "G/G": "common eye color, no major effect",
+    "G/A": "lighter eyes (modifier)",
+    "A/A": "lighter eyes (modifier)"
+  },
+  "rs12896399": {
+    "G/G": "increased chance of blue eyes",
+    "T/T": "darker eyes (brown)"
+  },
+  "rs1393350": {
+    "G/G": "darker eyes; darker hair",
+    "A/A": "lighter eyes (blue/green); lighter hair (blond/brown)"
+  },
+  "rs16891982": {
+    "G/G": "darker eyes (brown); dark hair; darker skin",
+    "C/C": "lighter eyes (blue/green); lighter hair (blond); lighter skin"
+  },
+  "rs1805007": {
+    "C/C": "normal pigmentation, no red hair",
+    "C/T": "red hair; pale skin; freckles",
+    "T/T": "red hair; pale skin; freckles"
+  },
+  "rs1805008": {
+    "C/C": "no red hair",
+    "C/T": "red hair",
+    "T/T": "red hair"
+  },
+  "rs12821256": {
+    "T/T": "dark hair",
+    "C/C": "blond hair"
+  },
+  "rs1042725": {
+    "C/C": "taller (+0.4 cm per c allele)",
+    "T/T": "shorter"
+  },
+  "rs143383": {
+    "T/T": "shorter",
+    "C/C": "taller (+0.3 cm per c)"
+  },
+  "rs724016": {
+    "A/A": "taller",
+    "G/G": "shorter"
+  },
+  "rs1812175": {
+    "C/C": "shorter",
+    "T/T": "taller"
+  },
+  "rs1426654": {
+    "G/G": "darker skin",
+    "A/A": "lighter skin"
+  },
+  "rs6058017": {
+    "G/G": "darker skin",
+    "A/A": "lighter skin"
+  },
+  "rs3827760": {
+    "A/A": "attached earlobes; thicker, straighter hair",
+    "G/G": "free earlobes; thinner hair"
+  }
+}

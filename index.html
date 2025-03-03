@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>local genetic analysis</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      display: flex;
+      height: 100vh;
+    }
+    .sidebar {
+      width: 250px;
+      background: #f0f0f0;
+      padding: 1rem;
+      border-right: 2px solid #ddd;
+      overflow-y: auto;
+    }
+    .content {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .snp-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+    .status {
+      font-size: 1.2rem;
+    }
+    .summary {
+      background: #e6ffe6;
+      border: 1px solid #b3ffb3;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    .breakdown {
+      border: 1px solid #ddd;
+      padding: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h1>snps</h1>
+    <div id="snpList"></div>
+  </div>
+  <div class="content">
+    <h1>genetic analysis tool</h1>
+    <input type="file" id="dataFile" accept=".vcf,.txt">
+    <button id="analyzeBtn">analyze</button>
+    <div id="finalSummary"></div>
+    <div id="detailedBreakdown"></div>
+  </div>
+
+  <script>
+    let snpTraits = {};
+
+    // load snpTraits from local JSON file
+    fetch('snpTraits.json')
+      .then(response => {
+        if (!response.ok) throw new Error('network error');
+        return response.json();
+      })
+      .then(data => { 
+        snpTraits = data; 
+        renderSnpList();
+      })
+      .catch(error => {
+        console.error('failed to load snpTraits.json:', error);
+        alert('failed to load snp traits data');
+      });
+
+    // define our main trait groups and the SNPs relevant for each
+    const traitGroups = {
+      "eye": {
+        label: "Eye Color",
+        snps: ["rs12913832", "rs1800407", "rs12896399", "rs1393350", "rs16891982"]
+      },
+      "hair": {
+        label: "Hair Color",
+        snps: ["rs12913832", "rs1393350", "rs16891982", "rs1805007", "rs1805008", "rs12821256"]
+      },
+      "height": {
+        label: "Height",
+        snps: ["rs1042725", "rs143383", "rs724016", "rs1812175"]
+      }
+    };
+
+    // render the list of SNPs in the sidebar with a check or X
+    function renderSnpList(foundSnps = {}) {
+      const snpListDiv = document.getElementById("snpList");
+      snpListDiv.innerHTML = "";
+      for (let snp in snpTraits) {
+        const item = document.createElement("div");
+        item.className = "snp-item";
+        const snpName = document.createElement("span");
+        snpName.textContent = snp;
+        const status = document.createElement("span");
+        status.className = "status";
+        status.textContent = foundSnps[snp] ? "✅" : "❌";
+        item.appendChild(snpName);
+        item.appendChild(status);
+        snpListDiv.appendChild(item);
+      }
+    }
+
+    // convert numeric genotype (from VCF) to allele letters using ref and alt
+    function convertGenotype(gt, ref, alt) {
+      gt = gt.replace("|", "/"); // normalize separator
+      const alleles = gt.split("/");
+      const allele1 = alleles[0] === "0" ? ref : alt;
+      const allele2 = alleles[1] === "0" ? ref : alt;
+      return allele1 + "/" + allele2;
+    }
+
+    // parse VCF file content
+    function parseVCF(content) {
+      const lines = content.split(/\r?\n/);
+      if (!lines[0].startsWith("##fileformat=VCF")) {
+        alert("not a valid vcf file, try again");
+        return null;
+      }
+      const results = {};
+      for (let line of lines) {
+        if (line.startsWith("#")) continue;
+        const cols = line.split("\t");
+        if (cols.length < 10) continue;
+        const snpId = cols[2];
+        if (!snpTraits[snpId]) continue;
+        const ref = cols[3], alt = cols[4];
+        const formatFields = cols[8].split(":");
+        const sampleData = cols[9].split(":");
+        const gtIndex = formatFields.indexOf("GT");
+        if (gtIndex === -1) continue;
+        let genotype = convertGenotype(sampleData[gtIndex], ref, alt);
+        if (!snpTraits[snpId][genotype] && genotype.includes("/")) {
+          const parts = genotype.split("/");
+          const rev = parts[1] + "/" + parts[0];
+          if (snpTraits[snpId][rev]) genotype = rev;
+        }
+        results[snpId] = genotype;
+      }
+      return results;
+    }
+
+    // parse AncestryDNA file content (5 columns)
+    function parseAncestry(content) {
+      const lines = content.split(/\r?\n/);
+      const results = {};
+      for (let line of lines) {
+        if (line.startsWith("#") || line.startsWith("rsid") || line.trim() === "") continue;
+        const cols = line.split("\t");
+        if (cols.length < 5) continue;
+        const snpId = cols[0];
+        if (!snpTraits[snpId]) continue;
+        let allele1 = cols[3].trim(), allele2 = cols[4].trim();
+        let genotype = allele1 + "/" + allele2;
+        if (!snpTraits[snpId][genotype] && genotype.includes("/")) {
+          const parts = genotype.split("/");
+          const rev = parts[1] + "/" + parts[0];
+          if (snpTraits[snpId][rev]) genotype = rev;
+        }
+        results[snpId] = genotype;
+      }
+      return results;
+    }
+
+    // parse 23andMe file content (4 columns)
+    function parse23andMe(content) {
+      const lines = content.split(/\r?\n/);
+      const results = {};
+      for (let line of lines) {
+        if (line.startsWith("#") || line.startsWith("rsid") || line.trim() === "") continue;
+        const cols = line.split("\t");
+        if (cols.length < 4) continue;
+        const snpId = cols[0];
+        if (!snpTraits[snpId]) continue;
+        let genotype = cols[3].trim();
+        if (genotype.length === 2) {
+          genotype = genotype[0] + "/" + genotype[1];
+        }
+        if (!snpTraits[snpId][genotype] && genotype.includes("/")) {
+          const parts = genotype.split("/");
+          const rev = parts[1] + "/" + parts[0];
+          if (snpTraits[snpId][rev]) genotype = rev;
+        }
+        results[snpId] = genotype;
+      }
+      return results;
+    }
+
+    // helper: if a phenotype string is composite (e.g., "blue eyes; lighter hair"),
+    // extract the part for a given group ("eye" => first part, "hair" => second part)
+    function extractGroupPhenotype(snpId, phenotype, group) {
+      if (phenotype.includes(";")) {
+        let parts = phenotype.split(";").map(p => p.trim());
+        if (group === "eye") return parts[0];
+        if (group === "hair") return parts[1] ? parts[1] : parts[0];
+      }
+      return phenotype;
+    }
+
+    // map genotypes to full trait descriptions per SNP
+    function mapGenotypesToPhenotypes(genotypes) {
+      const mapped = {};
+      for (let snp in genotypes) {
+        let genotype = genotypes[snp];
+        let trait = snpTraits[snp][genotype] || `unknown for ${snp}`;
+        mapped[snp] = trait;
+      }
+      return mapped;
+    }
+
+    // build final summary by grouping SNP results into trait groups
+    function buildSummary(mappedTraits) {
+      const summary = {};
+      // initialize groups
+      for (let group in traitGroups) {
+        summary[group] = [];
+      }
+      // accumulate trait info from SNPs that belong to each group
+      for (let group in traitGroups) {
+        const snpList = traitGroups[group].snps;
+        for (let snp of snpList) {
+          if (mappedTraits[snp]) {
+            let traitText = extractGroupPhenotype(snp, mappedTraits[snp], group);
+            summary[group].push(traitText);
+          }
+        }
+      }
+      // choose one representative value per group (first one found)
+      const finalSummary = {};
+      for (let group in summary) {
+        finalSummary[traitGroups[group].label] = summary[group].length ? summary[group][0] : "unknown";
+      }
+      return finalSummary;
+    }
+
+    // detect file format by checking first non-comment line column count
+    function detectFormat(content) {
+      if (content.startsWith("##fileformat=VCF")) return "vcf";
+      const lines = content.split(/\r?\n/);
+      for (let line of lines) {
+        if (line.startsWith("#") || line.trim() === "") continue;
+        const cols = line.split("\t");
+        if (cols.length === 5) return "ancestry";
+        if (cols.length === 4) return "23andme";
+        break;
+      }
+      return null;
+    }
+
+    // handle file upload & analysis
+    document.getElementById("analyzeBtn").addEventListener("click", () => {
+      if (!Object.keys(snpTraits).length) {
+        alert("snp traits data not loaded yet, try again in a sec");
+        return;
+      }
+      const fileInput = document.getElementById("dataFile");
+      if (!fileInput.files.length) {
+        alert("upload a file, dude");
+        return;
+      }
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target.result;
+        const format = detectFormat(content);
+        let genotypes = null;
+        if (format === "vcf") {
+          genotypes = parseVCF(content);
+        } else if (format === "ancestry") {
+          genotypes = parseAncestry(content);
+        } else if (format === "23andme") {
+          genotypes = parse23andMe(content);
+        } else {
+          alert("unrecognized file format");
+          return;
+        }
+        if (!genotypes || Object.keys(genotypes).length === 0) {
+          alert("no relevant snps found in file");
+          return;
+        }
+        // update sidebar with SNP checkmarks
+        renderSnpList(genotypes);
+        // map to full trait descriptions
+        const mappedTraits = mapGenotypesToPhenotypes(genotypes);
+        // build and display final summary and breakdown
+        const finalSummary = buildSummary(mappedTraits);
+        displayResults(finalSummary, mappedTraits);
+      };
+      reader.onerror = () => alert("error reading file, try again");
+      reader.readAsText(file);
+    });
+
+    // display final summary and detailed breakdown by trait group
+    function displayResults(finalSummary, mappedTraits) {
+      const summaryDiv = document.getElementById("finalSummary");
+      let summaryHTML = `<div class="summary"><h2>final summary</h2>
+        <p>based on the uploaded genetic data:</p>
+        <ul>`;
+      for (let key in finalSummary) {
+        summaryHTML += `<li>${key}: ${finalSummary[key]}</li>`;
+      }
+      summaryHTML += `</ul></div>`;
+      summaryDiv.innerHTML = summaryHTML;
+
+      let breakdownHTML = `<div class="breakdown"><h2>detailed breakdown</h2>`;
+      for (let group in traitGroups) {
+        breakdownHTML += `<h3>${traitGroups[group].label}</h3><ul>`;
+        for (let snp of traitGroups[group].snps) {
+          if (mappedTraits[snp]) {
+            let traitText = extractGroupPhenotype(snp, mappedTraits[snp], group);
+            breakdownHTML += `<li>${snp}: ${traitText}</li>`;
+          } else {
+            breakdownHTML += `<li>${snp}: <em>not found</em></li>`;
+          }
+        }
+        breakdownHTML += `</ul>`;
+      }
+      breakdownHTML += `</div>`;
+      document.getElementById("detailedBreakdown").innerHTML = breakdownHTML;
+    }
+  </script>
+</body>
+</html>
