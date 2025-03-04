@@ -21,6 +21,7 @@
       flex: 1;
       padding: 1rem;
       overflow-y: auto;
+      position: relative;
     }
     h1 { font-size: 1.5rem; margin-bottom: 1rem; }
     .snp-item { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
@@ -29,6 +30,27 @@
       background: #e6ffe6; border: 1px solid #b3ffb3; padding: 1rem; margin-bottom: 1rem;
     }
     .breakdown { border: 1px solid #ddd; padding: 1rem; }
+    /* spinner styles */
+    #spinnerContainer {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: none;
+      z-index: 10;
+    }
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #555;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
@@ -40,12 +62,17 @@
     <h1>genetic analysis tool</h1>
     <input type="file" id="dataFile" accept=".vcf,.txt">
     <button id="analyzeBtn">analyze</button>
+    <!-- spinner container -->
+    <div id="spinnerContainer">
+      <div class="spinner"></div>
+    </div>
     <div id="finalSummary"></div>
     <div id="detailedBreakdown"></div>
   </div>
   <script type="module">
-    // import your bundled snp data
+    // import bundled snp and trait data
     import { snpData } from './snpData.js';
+    import { traitData } from './traitData.js';
 
     let db;
     let snpTraits = {};
@@ -94,21 +121,17 @@
 
     // --- end indexeddb setup ---
 
-    // define our main trait groups and the SNPs relevant for each
-    const traitGroups = {
-      "eye": {
-        label: "Eye Color",
-        snps: ["rs12913832", "rs1800407", "rs12896399", "rs1393350", "rs16891982"]
-      },
-      "hair": {
-        label: "Hair Color",
-        snps: ["rs12913832", "rs1393350", "rs16891982", "rs1805007", "rs1805008", "rs12821256"]
-      },
-      "height": {
-        label: "Height",
-        snps: ["rs1042725", "rs143383", "rs724016", "rs1812175"]
+    // dynamically build trait groups from imported traitData
+    // each trait becomes a group with a label and its associated SNPs
+    const traitGroups = {};
+    traitData.traits.forEach(trait => {
+      if (trait.associatedSNPs && trait.associatedSNPs.length) {
+        traitGroups[trait.traitName] = {
+          label: trait.traitName,
+          snps: trait.associatedSNPs
+        };
       }
-    };
+    });
 
     // render the list of SNPs in the sidebar with a check or X
     function renderSnpList(foundSnps = {}) {
@@ -214,12 +237,12 @@
     }
 
     // helper: if a phenotype string is composite (e.g., "blue eyes; lighter hair"),
-    // extract the part for a given group ("eye" => first part, "hair" => second part)
-    function extractGroupPhenotype(snpId, phenotype, group) {
+    // extract the part for a given group (e.g., for "Eye Color" vs "Hair Color")
+    function extractGroupPhenotype(snpId, phenotype, groupLabel) {
       if (phenotype.includes(";")) {
         let parts = phenotype.split(";").map(p => p.trim());
-        if (group === "eye") return parts[0];
-        if (group === "hair") return parts[1] ? parts[1] : parts[0];
+        if (groupLabel.toLowerCase().includes("eye")) return parts[0];
+        if (groupLabel.toLowerCase().includes("hair")) return parts[1] ? parts[1] : parts[0];
       }
       return phenotype;
     }
@@ -235,24 +258,21 @@
       return mapped;
     }
 
-    // build final summary by grouping SNP results into trait groups
+    // build final summary by grouping SNP results into dynamic trait groups
     function buildSummary(mappedTraits) {
       const summary = {};
-      // initialize groups
       for (let group in traitGroups) {
         summary[group] = [];
       }
-      // accumulate trait info from SNPs that belong to each group
       for (let group in traitGroups) {
         const snpList = traitGroups[group].snps;
         for (let snp of snpList) {
           if (mappedTraits[snp]) {
-            let traitText = extractGroupPhenotype(snp, mappedTraits[snp], group);
+            let traitText = extractGroupPhenotype(snp, mappedTraits[snp], traitGroups[group].label);
             summary[group].push(traitText);
           }
         }
       }
-      // choose one representative value per group (first one found)
       const finalSummary = {};
       for (let group in summary) {
         finalSummary[traitGroups[group].label] = summary[group].length ? summary[group][0] : "unknown";
@@ -285,39 +305,49 @@
         alert("upload a file, dude");
         return;
       }
+      // show spinner
+      const spinner = document.getElementById("spinnerContainer");
+      spinner.style.display = "block";
+
       const file = fileInput.files[0];
       const reader = new FileReader();
       reader.onload = (e) => {
-        const content = e.target.result;
-        const format = detectFormat(content);
-        let genotypes = null;
-        if (format === "vcf") {
-          genotypes = parseVCF(content);
-        } else if (format === "ancestry") {
-          genotypes = parseAncestry(content);
-        } else if (format === "23andme") {
-          genotypes = parse23andMe(content);
-        } else {
-          alert("unrecognized file format");
-          return;
-        }
-        if (!genotypes || Object.keys(genotypes).length === 0) {
-          alert("no relevant snps found in file");
-          return;
-        }
-        // update sidebar with SNP checkmarks
-        renderSnpList(genotypes);
-        // map to full trait descriptions
-        const mappedTraits = mapGenotypesToPhenotypes(genotypes);
-        // build and display final summary and breakdown
-        const finalSummary = buildSummary(mappedTraits);
-        displayResults(finalSummary, mappedTraits);
+        // yield to render spinner
+        setTimeout(() => {
+          const content = e.target.result;
+          const format = detectFormat(content);
+          let genotypes = null;
+          if (format === "vcf") {
+            genotypes = parseVCF(content);
+          } else if (format === "ancestry") {
+            genotypes = parseAncestry(content);
+          } else if (format === "23andme") {
+            genotypes = parse23andMe(content);
+          } else {
+            alert("unrecognized file format");
+            spinner.style.display = "none";
+            return;
+          }
+          if (!genotypes || Object.keys(genotypes).length === 0) {
+            alert("no relevant snps found in file");
+            spinner.style.display = "none";
+            return;
+          }
+          renderSnpList(genotypes);
+          const mappedTraits = mapGenotypesToPhenotypes(genotypes);
+          const finalSummary = buildSummary(mappedTraits);
+          displayResults(finalSummary, mappedTraits);
+          spinner.style.display = "none";
+        }, 100);
       };
-      reader.onerror = () => alert("error reading file, try again");
+      reader.onerror = () => {
+        alert("error reading file, try again");
+        spinner.style.display = "none";
+      };
       reader.readAsText(file);
     });
 
-    // display final summary and detailed breakdown by trait group
+    // display final summary and detailed breakdown by dynamic trait group
     function displayResults(finalSummary, mappedTraits) {
       const summaryDiv = document.getElementById("finalSummary");
       let summaryHTML = `<div class="summary"><h2>final summary</h2>
@@ -334,7 +364,7 @@
         breakdownHTML += `<h3>${traitGroups[group].label}</h3><ul>`;
         for (let snp of traitGroups[group].snps) {
           if (mappedTraits[snp]) {
-            let traitText = extractGroupPhenotype(snp, mappedTraits[snp], group);
+            let traitText = extractGroupPhenotype(snp, mappedTraits[snp], traitGroups[group].label);
             breakdownHTML += `<li>${snp}: ${traitText}</li>`;
           } else {
             breakdownHTML += `<li>${snp}: <em>not found</em></li>`;
@@ -357,8 +387,6 @@
         console.error("db init error:", error);
         alert("failed to initialize snp traits db");
       });
-
-    // attach your event listeners, etc.
   </script>
 </body>
 </html>

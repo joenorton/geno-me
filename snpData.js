@@ -38,6 +38,12 @@ export const snpData = {
       "T/T": "red hair",
       "trait": ["hair color"]
     },
+    "rs1805009": {
+      "G/G": "normal MC1R function",
+      "G/A": "possible red hair influence (modifier)",
+      "A/A": "red hair; fair skin; freckles",
+      "trait": ["hair color", "red hair"]
+    },
     "rs12821256": {
       "T/T": "dark hair",
       "C/C": "blond hair",
@@ -77,6 +83,66 @@ export const snpData = {
       "A/A": "attached earlobes; thicker, straighter hair",
       "G/G": "free earlobes; thinner hair",
       "trait": ["earlobe type", "hair texture"]
+    },
+    "rs4988235": {
+      "T/T": "lactase persistence (lactose tolerant)",
+      "C/T": "lactase persistence (often tolerant)",
+      "C/C": "lactose intolerance",
+      "trait": ["lactose tolerance"]
+    },
+    "rs17822931": {
+      "G/G": "wet earwax",
+      "G/A": "wet earwax",
+      "A/A": "dry earwax",
+      "trait": ["earwax type"]
+    },
+    "rs713598": {
+      "C/C": "bitter taster (likely PAV/PAV)",
+      "C/T": "intermediate bitter sensitivity",
+      "T/T": "non-taster (likely AVI/AVI)",
+      "trait": ["bitter taste"]
+    },
+    "rs1726866": {
+      "A/A": "bitter taster (likely PAV/PAV)",
+      "A/G": "intermediate bitter sensitivity",
+      "G/G": "non-taster (likely AVI/AVI)",
+      "trait": ["bitter taste"]
+    },
+    "rs10246939": {
+      "G/G": "bitter taster (likely PAV/PAV)",
+      "G/A": "intermediate bitter sensitivity",
+      "A/A": "non-taster (likely AVI/AVI)",
+      "trait": ["bitter taste"]
+    },
+    "rs8176719": {
+      "G/G": "non-O blood type (A or B)",
+      "G/del": "non-O blood type (A or B)",
+      "del/del": "blood type O",
+      "trait": ["blood type"]
+    },
+    "rs8176746": {
+      "A/A": "blood type A",
+      "A/G": "blood type A or B (depending on haplotype)",
+      "G/G": "blood type B",
+      "trait": ["blood type"]
+    },
+    "rs671": {
+      "G/G": "active ALDH2; no flush reaction",
+      "G/A": "reduced ALDH2 activity; flush reaction",
+      "A/A": "inactive ALDH2; strong flush reaction",
+      "trait": ["alcohol flush reaction"]
+    },
+    "rs334": {
+      "A/A": "normal hemoglobin",
+      "A/T": "carrier (sickle cell trait)",
+      "T/T": "sickle cell anemia",
+      "trait": ["sickle cell"]
+    },
+    "rs1800562": {
+      "G/G": "normal iron metabolism",
+      "G/A": "carrier; risk of iron overload",
+      "A/A": "high risk for hereditary hemochromatosis (iron overload)",
+      "trait": ["iron overload", "hemochromatosis"]
     }
   };
   
