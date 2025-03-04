@@ -22,28 +22,13 @@
       padding: 1rem;
       overflow-y: auto;
     }
-    h1 {
-      font-size: 1.5rem;
-      margin-bottom: 1rem;
-    }
-    .snp-item {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 0.5rem;
-    }
-    .status {
-      font-size: 1.2rem;
-    }
+    h1 { font-size: 1.5rem; margin-bottom: 1rem; }
+    .snp-item { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
+    .status { font-size: 1.2rem; }
     .summary {
-      background: #e6ffe6;
-      border: 1px solid #b3ffb3;
-      padding: 1rem;
-      margin-bottom: 1rem;
+      background: #e6ffe6; border: 1px solid #b3ffb3; padding: 1rem; margin-bottom: 1rem;
     }
-    .breakdown {
-      border: 1px solid #ddd;
-      padding: 1rem;
-    }
+    .breakdown { border: 1px solid #ddd; padding: 1rem; }
   </style>
 </head>
 <body>
@@ -58,24 +43,56 @@
     <div id="finalSummary"></div>
     <div id="detailedBreakdown"></div>
   </div>
+  <script type="module">
+    // import your bundled snp data
+    import { snpData } from './snpData.js';
 
-  <script>
+    let db;
     let snpTraits = {};
 
-    // load snpTraits from local JSON file
-    fetch('snpTraits.json')
-      .then(response => {
-        if (!response.ok) throw new Error('network error');
-        return response.json();
-      })
-      .then(data => { 
-        snpTraits = data; 
-        renderSnpList();
-      })
-      .catch(error => {
-        console.error('failed to load snpTraits.json:', error);
-        alert('failed to load snp traits data');
+    // initialize db and populate using bundled snpData, return a promise
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open("GeneticDB", 1);
+        request.onupgradeneeded = event => {
+          const db = event.target.result;
+          const store = db.createObjectStore("snpTraits", { keyPath: "snpId" });
+          Object.keys(snpData).forEach(snp => {
+            store.add({ snpId: snp, variants: snpData[snp] });
+          });
+        };
+        request.onsuccess = event => {
+          db = event.target.result;
+          console.log("geneticdb initialized with bundled snp data");
+          resolve();
+        };
+        request.onerror = event => {
+          console.error("error opening db:", event);
+          reject(event);
+        };
       });
+    }
+    // load all SNP trait mappings from IndexedDB into our global variable
+    function loadAllSnpTraits() {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction("snpTraits", "readonly");
+        const store = transaction.objectStore("snpTraits");
+        const request = store.getAll();
+        request.onsuccess = event => {
+          const records = event.target.result;
+          let all = {};
+          records.forEach(record => {
+            all[record.snpId] = record.variants;
+          });
+          resolve(all);
+        };
+        request.onerror = event => {
+          reject(event);
+        };
+      });
+    }
+
+    // --- end indexeddb setup ---
 
     // define our main trait groups and the SNPs relevant for each
     const traitGroups = {
@@ -257,7 +274,7 @@
       return null;
     }
 
-    // handle file upload & analysis
+    // --- file upload & analysis ---
     document.getElementById("analyzeBtn").addEventListener("click", () => {
       if (!Object.keys(snpTraits).length) {
         alert("snp traits data not loaded yet, try again in a sec");
@@ -328,6 +345,20 @@
       breakdownHTML += `</div>`;
       document.getElementById("detailedBreakdown").innerHTML = breakdownHTML;
     }
+
+    // --- initialize our db and load snp traits ---
+    initDB()
+      .then(() => loadAllSnpTraits())
+      .then(data => {
+        snpTraits = data;
+        renderSnpList();
+      })
+      .catch(error => {
+        console.error("db init error:", error);
+        alert("failed to initialize snp traits db");
+      });
+
+    // attach your event listeners, etc.
   </script>
 </body>
 </html>
