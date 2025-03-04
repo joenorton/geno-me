@@ -20,7 +20,7 @@ export const traitData = {
       "associatedSNPs": [
         "rs17822931 in ABCC11 gene"
       ],
-      "inheritancePattern": "Single-gene, two-allele Mendelian trait (G allele dominant for wet; A allele recessive for dry)",
+      "inheritancePattern": "Single-gene, two-allele Mendelian (G allele dominant for wet; A allele recessive for dry)",
       "generalDescription": "Earwax consistency is determined by the ABCC11 gene variant rs17822931. Individuals with at least one G allele have wet earwax, while AA homozygotes have dry earwax.",
       "predictiveStrength": "Very high – rs17822931 almost perfectly predicts earwax phenotype.",
       "references": [
@@ -122,6 +122,78 @@ export const traitData = {
         "Larkin et al. (2015)",
         "Box et al. (1997)",
         "OMIM entry for MC1R"
+      ]
+    },
+    {
+      "traitName": "Eye Color",
+      "effectSize": "Polygenic",
+      "associatedSNPs": [
+        "rs12913832 (HERC2/OCA2)",
+        "rs1800407 (OCA2)",
+        "rs12203592 (IRF4)",
+        "rs12896399 (SLC24A4)"
+      ],
+      "inheritancePattern": "Polygenic (additive) – no simple dominant/recessive pattern; multiple genes contribute.",
+      "generalDescription": "Eye color is determined by the amount and type of melanin in the iris, controlled by many genes. The HERC2-OCA2 locus is the single largest genetic influence; an intronic SNP in HERC2 (rs12913832) is key in distinguishing blue vs. brown eyes. However, additional genes like OCA2, IRF4, SLC24A4, and TYR further modulate iris pigmentation.",
+      "possibleRangesOrVariability": "Iris color ranges from light blue to green/hazel to dark brown. Different genotypes at HERC2/OCA2 can yield blue, intermediate hazel, or brown eyes. Most SNP effects are small and additive; environmental factors have little influence.",
+      "references": [
+        "D’Onofrio et al. (2023)",
+        "Sturm (2009)",
+        "Liu et al. (2009)"
+      ]
+    },
+    {
+      "traitName": "Hair Color",
+      "effectSize": "Polygenic",
+      "associatedSNPs": [
+        "rs1805007 (MC1R)",
+        "rs1805008 (MC1R)",
+        "rs12203592 (IRF4)",
+        "rs12896399 (SLC24A4)"
+      ],
+      "inheritancePattern": "Polygenic (additive) – multiple genes influence hair shade; red hair requires biallelic loss-of-function in MC1R, while other colors are determined additively.",
+      "generalDescription": "Hair color is determined by the type and amount of melanin in hair shafts – primarily eumelanin and pheomelanin. The MC1R gene is a major contributor to red hair, while variants in IRF4 and SLC24A4 are linked to lighter hair. Other genes such as ASIP, KITLG, OCA2, SLC45A2, TYR, and TYRP1 also influence hair pigmentation, producing a continuous spectrum.",
+      "possibleRangesOrVariability": "Natural hair color ranges from very light blonde to black, with red hair as a distinct category. Allele combinations yield gradual changes in pigmentation; environmental factors like sun exposure may temporarily lighten hair.",
+      "references": [
+        "MedlinePlus Genetics – Hair Color and Genetics",
+        "Bortsov et al. (2019)",
+        "Han et al. (2008)"
+      ]
+    },
+    {
+      "traitName": "Skin Tone",
+      "effectSize": "Polygenic",
+      "associatedSNPs": [
+        "rs1426654 (SLC24A5)",
+        "rs16891982 (SLC45A2)",
+        "rs1042602 (TYR)",
+        "rs642742 (ASIP)"
+      ],
+      "inheritancePattern": "Polygenic (additive) – numerous genes contribute with incomplete dominance effects.",
+      "generalDescription": "Skin tone is controlled by multiple genetic factors that regulate melanin synthesis, distribution, and degradation. Key genes such as SLC24A5 and SLC45A2 are major determinants of light versus dark pigmentation, with additional contributions from TYR, OCA2, and others identified in diverse populations.",
+      "possibleRangesOrVariability": "Skin tone shows continuous variation from very light to very dark. Each SNP's effect is subtle, but their additive effects produce a wide range. Environmental factors (like sun exposure) can temporarily darken the skin, though baseline tone is genetically set.",
+      "references": [
+        "Soejima & Koda (2007)",
+        "Stokowski et al. (2007)",
+        "Tishkoff et al. (2017)"
+      ]
+    },
+    {
+      "traitName": "Height",
+      "effectSize": "Polygenic",
+      "associatedSNPs": [
+        "rs1042725 (HMGA2)",
+        "rs143384 (GDF5)",
+        "rs10938397 (GNPDA2)",
+        "[plus thousands of additional variants]"
+      ],
+      "inheritancePattern": "Polygenic (additive) – each tall allele adds slightly to height and each short allele subtracts; no simple dominant/recessive pattern.",
+      "generalDescription": "Adult height is one of the most polygenic human traits. GWAS have identified thousands of SNPs associated with height, each contributing a minute effect. For example, rs1042725 in HMGA2 increases height by approximately 0.4 cm per allele. Collectively, these variants account for an estimated 10–40% of heritable height variation.",
+      "possibleRangesOrVariability": "Height typically ranges from about 145 cm to over 200 cm. The cumulative additive effects of numerous alleles create a bell-curve distribution in populations. Environmental factors, such as nutrition, also influence final height.",
+      "references": [
+        "Weedon et al. (2007)",
+        "Yengo et al. (2022)",
+        "Visscher et al. (2010)"
       ]
     }
   ]
